@@ -109,6 +109,36 @@ cp ./config.example.yaml ./config.yaml
 
 ---
 
+## 🔄 代理池怎么用（快速指南）
+
+如果你只想快速用起来，按下面改 `config.yaml`：
+
+```yaml
+mode: pool
+
+listener:
+  address: 0.0.0.0
+  port: 2323
+  protocol: http  # 可选: http / socks5 / mixed
+  username: ""
+  password: ""
+
+pool:
+  mode: sequential      # sequential(轮询) / random(随机) / balance(最小连接)
+  failure_threshold: 3  # 连续失败达到阈值后临时拉黑
+  blacklist_duration: 24h
+```
+
+启动后，你的客户端只需要连一个代理入口（上例是 `2323`），代理池会自动在可用节点里分配请求。
+
+- 浏览器 / 系统代理：`127.0.0.1:2323`
+- 命令行（HTTP 代理示例）：`http://127.0.0.1:2323`
+- 若配置了账号密码：`http://用户名:密码@127.0.0.1:2323`
+
+可在管理面板（默认 `http://127.0.0.1:9888`）查看节点状态、延迟、流量与故障切换情况。
+
+---
+
 ## 🧪 从源码构建（开发者）
 
 项目由 Go (1.24+) + Node (22+) 构成。
