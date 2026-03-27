@@ -109,6 +109,56 @@ cp ./config.example.yaml ./config.yaml
 
 ---
 
+## 🔄 代理池怎么用（快速指南）
+
+如果你只想快速用起来，按下面改 `config.yaml`：
+
+```yaml
+mode: pool
+
+listener:
+  address: 0.0.0.0
+  port: 2323
+  protocol: http  # 可选: http / socks5 / mixed
+  username: ""
+  password: ""
+
+pool:
+  mode: sequential      # sequential(轮询) / random(随机) / balance(最小连接)
+  failure_threshold: 3  # 连续失败达到阈值后临时拉黑
+  blacklist_duration: 24h
+```
+
+启动后，你的客户端只需要连一个代理入口（上例是 `2323`），代理池会自动在可用节点里分配请求。
+
+- 浏览器 / 系统代理：`127.0.0.1:2323`
+- 命令行（HTTP 代理示例）：`http://127.0.0.1:2323`
+- 若配置了账号密码：`http://用户名:密码@127.0.0.1:2323`
+
+可在管理面板（默认 `http://127.0.0.1:9888`）查看节点状态、延迟、流量与故障切换情况。
+
+### 轮换逻辑（代理池是怎么切换节点的）
+
+代理池每次请求都会先筛出“可用候选节点”：
+
+- 当前不在黑名单
+- 支持当前网络类型（TCP/UDP）
+
+然后按 `pool.mode` 选择：
+
+- `sequential`：顺序轮询（round-robin）
+- `random`：在候选节点中随机选择
+- `balance`：选择当前活跃连接数最少的节点（不是按延迟）
+
+失败与故障切换规则：
+
+- 某节点连续失败达到 `failure_threshold` 后，会进入黑名单 `blacklist_duration`
+- 成功一次会清空该节点“连续失败计数”
+- 黑名单到期后自动恢复
+- 如果所有节点都被拉黑，系统会自动临时释放全部黑名单并重试，避免“全不可用”死锁
+
+---
+
 ## 🧪 从源码构建（开发者）
 
 项目由 Go (1.24+) + Node (22+) 构成。
